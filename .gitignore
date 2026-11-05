@@ -1,0 +1,33 @@
+# Database lokal & SQLite
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# IDE konfigurasi (Spyder, VSCode, PyCharm)
+.spyproject/
+.spyderproject/
+.vscode/
+.idea/
+
+# Lingkungan virtual & sensitif
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Berkas kompresi
+*.zip
+*.tar.gz
+*.rar
+*.7z
