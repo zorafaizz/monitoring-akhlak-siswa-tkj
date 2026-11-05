@@ -60,21 +60,29 @@ Sistem memodelkan hubungan *One-to-Many* (Satu siswa dapat memiliki banyak catat
    - `CREATE INDEX IF NOT EXISTS idx_catatan_id_siswa ON catatan(id_siswa);`
    - `CREATE INDEX IF NOT EXISTS idx_catatan_tanggal ON catatan(tanggal);`
 
-#### 2. Perancangan Arsitektur Antarmuka Ganda
-1. **Terminal Technical Dashboard (TUI)**:
-   - Navigasi 7 menu interaktif dengan pewarnaan ANSI 256 dan pembingkaian box-drawing Unicode.
-   - Fitur ikhtisar analitik global dan seeder simulasi 10 siswa TKJ.
-2. **Web Dashboard GUI (Single-Page Application)**:
+#### 2. Perancangan Arsitektur Multi-Antarmuka Terpadu
+1. **Desktop Native GUI (`gui_app.py`)**:
+   - Berbasis pustaka grafis bawaan Python (`tkinter` & `ttk`).
+   - Tampilan tema dark zinc profesional, kartu metrik KPI, dual-pane layout, real-time search, dan dialog pop-up validasi.
+2. **Web Dashboard GUI SPA (`server_web.py`)**:
    - Digerakkan oleh server HTTP bawaan Python (`http.server` & `socketserver`).
-   - Frontend modern bergaya Linear/Vercel: Dark mode zinc-950, Lucide icons, live search siswa, drawer riwayat terurut, modal form validasi instan, dan ekspor data JSON resmi.
+   - Frontend modern bergaya Linear/Vercel: Dark mode zinc-950, Lucide icons, live search siswa, drawer riwayat terurut, analitik distribusi kategori, modal form validasi instan, ekspor data JSON resmi, dan layout cetak resmi ber-kop surat.
+3. **Terminal Technical Dashboard (`monitoring_akhlak.py`)**:
+   - Navigasi menu interaktif dengan pewarnaan ANSI 256 dan pembingkaian box-drawing Unicode.
+   - Fitur ikhtisar analitik global dan seeder simulasi 10 siswa TKJ.
+4. **Unified Interactive Launcher (`main.py`)**:
+   - Titik masuk operasional tunggal yang menyajikan seleksi mode aplikasi saat pertama kali dimulai.
 
 ---
 
 ### 03 Bangun
 
-Aplikasi dikonstruksi ke dalam modul Python murni:
-1. `monitoring_akhlak.py`: Modul database SQLite, logika bisnis, analitik global, seeder data simulasi, dan CLI Technical Dashboard.
-2. `server_web.py`: Server Web GUI SPA dan RESTful API handler berbasis pustaka standar.
+Aplikasi dikonstruksi ke dalam arsitektur modular Python murni:
+1. `main.py`: Launcher interaktif terpadu dan router argumen baris perintah (`--gui`, `--web`, `--cli`, `--seed`, `--test`).
+2. `gui_app.py`: Aplikasi Desktop GUI native berbasis Tkinter dengan antarmuka dual-pane dan visualisasi metrik.
+3. `server_web.py`: Server Web GUI SPA dan RESTful API handler berbasis pustaka standar (`http.server`).
+4. `monitoring_akhlak.py`: Modul inti SQLite, logika bisnis, analitik global, seeder data simulasi, dan CLI Technical Dashboard.
+5. `uji_skenario.py`: Skrip pengujian otomatis 6 skenario wajib.
 
 #### 1. Implementasi Keamanan & Integritas Data
 - **Parameterized Queries**: Seluruh pernyataan SQL (`INSERT`, `SELECT`) menggunakan placeholder tanda tanya (`?`) dan *tuple* parameter untuk mengeliminasi risiko *SQL Injection*.

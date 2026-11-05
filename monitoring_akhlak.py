@@ -243,6 +243,36 @@ def statistik_global(nama_db=NAMA_DB_DEFAULT):
         }
 
 
+def ambil_analisis_kategori(nama_db=NAMA_DB_DEFAULT):
+    """
+    Menghitung distribusi catatan dan rasio pembinaan per kategori karakter.
+    """
+    with koneksi_db(nama_db) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT 
+                kategori,
+                COUNT(*) as total,
+                SUM(CASE WHEN skor = 1 THEN 1 ELSE 0 END) as positif,
+                SUM(CASE WHEN skor = -1 THEN 1 ELSE 0 END) as evaluasi
+            FROM catatan
+            GROUP BY kategori
+            ORDER BY total DESC
+            """
+        )
+        rows = cursor.fetchall()
+        return [
+            {
+                "kategori": r[0],
+                "total": r[1],
+                "positif": r[2] or 0,
+                "evaluasi": r[3] or 0,
+            }
+            for r in rows
+        ]
+
+
 def isi_data_seeder(nama_db=NAMA_DB_DEFAULT):
     """
     Menyuntikkan data simulasi fiktif 10 siswa Kelas XII TKJ beserta rekam jejak
@@ -343,7 +373,8 @@ def tampilkan_menu():
     print(f"  {C_CYAN}4.{C_RESET} {C_BOLD}Dashboard & Statistik Global Kelas XII TKJ{C_RESET}")
     print(f"  {C_CYAN}5.{C_RESET} Suntikkan Data Seeder Simulasi Fiktif (10 Siswa TKJ)")
     print(f"  {C_CYAN}6.{C_RESET} {C_GREEN}Buka Web Dashboard GUI (Browser / Modern SPA){C_RESET}")
-    print(f"  {C_CYAN}7.{C_RESET} Keluar dari Aplikasi")
+    print(f"  {C_CYAN}7.{C_RESET} {C_CYAN}Buka Aplikasi Desktop GUI (Native Tkinter Window){C_RESET}")
+    print(f"  {C_CYAN}8.{C_RESET} Keluar dari Aplikasi")
     print(f"{C_CYAN}────────────────────────────────────────────────────────────────────────{C_RESET}")
 
 
@@ -394,7 +425,11 @@ def main():
     # Opsi flag CLI untuk eksekusi langsung
     if len(sys.argv) > 1:
         flag = sys.argv[1].strip()
-        if flag in ("--web", "-w"):
+        if flag in ("--gui", "-g"):
+            from gui_app import jalankan_gui
+            jalankan_gui()
+            return
+        elif flag in ("--web", "-w"):
             port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
             jalankan_server_web_lokal(port=port)
             return
@@ -406,7 +441,7 @@ def main():
     while True:
         tampilkan_menu()
         try:
-            pilihan = input(f"{C_BOLD}Pilih opsi menu (1-7): {C_RESET}").strip()
+            pilihan = input(f"{C_BOLD}Pilih opsi menu (1-8): {C_RESET}").strip()
 
             if pilihan == "1":
                 print(f"\n{C_CYAN}--- [1] FORM TAMBAH DATA SISWA BARU ---{C_RESET}")
@@ -463,11 +498,18 @@ def main():
                 jalankan_server_web_lokal()
 
             elif pilihan == "7":
+                try:
+                    from gui_app import jalankan_gui
+                    jalankan_gui()
+                except Exception as err:
+                    print(f"{C_RED}Gagal membuka Desktop GUI: {err}{C_RESET}\n")
+
+            elif pilihan == "8":
                 print(f"\n{C_GREEN}Sistem ditutup dengan aman. Terima kasih atas dedikasi pembinaannya.{C_RESET}")
                 break
 
             else:
-                print(f"\n{C_RED}Pilihan menu tidak valid. Silakan pilih angka 1 sampai 7.{C_RESET}\n")
+                print(f"\n{C_RED}Pilihan menu tidak valid. Silakan pilih angka 1 sampai 8.{C_RESET}\n")
 
         except (ValueError, sqlite3.IntegrityError) as err:
             print(f"{C_RED}Data belum tersimpan: {err}{C_RESET}\n")

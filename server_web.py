@@ -15,6 +15,7 @@ import urllib.parse
 
 from monitoring_akhlak import (
     NAMA_DB_DEFAULT,
+    ambil_analisis_kategori,
     ambil_semua_siswa,
     isi_data_seeder,
     koneksi_db,
@@ -60,9 +61,30 @@ HTML_PAGE = """<!DOCTYPE html>
     ::-webkit-scrollbar-track { background: #09090b; }
     ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+    /* Print Stylesheet Resmi */
+    @media print {
+      body { background: white !important; color: black !important; }
+      header, #statsGrid, #analyticsSection, #bannerPrinsip, .no-print, button, #toast { display: none !important; }
+      #kopSuratPrint { display: block !important; }
+      table { border-collapse: collapse !important; width: 100% !important; }
+      th, td { border: 1px solid #cbd5e1 !important; color: black !important; padding: 6px 8px !important; }
+      th { background-color: #f1f5f9 !important; }
+      #ttdSection { display: flex !important; justify-content: space-between !important; margin-top: 40px !important; }
+    }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-zinc-800 selection:text-zinc-200">
+
+  <!-- KOP SURAT KHUSUS CETAK RESMI -->
+  <div id="kopSuratPrint" class="hidden text-black mb-6 border-b-2 border-black pb-3">
+    <div class="text-center">
+      <h1 class="text-lg font-bold tracking-tight uppercase">SMK ALHADIID 1 CILEUNGSI</h1>
+      <h2 class="text-sm font-semibold tracking-wide uppercase">PROGRAM KEAHLIAN TEKNIK KOMPUTER DAN JARINGAN (TKJ)</h2>
+      <p class="text-[11px] text-gray-600">Jl. Raya Cileungsi - Setu, Kabupaten Bogor, Jawa Barat</p>
+      <div class="mt-2 text-xs font-bold uppercase underline">REKAPITULASI PEMBINAAN & MONITORING AKHLAK SISWA KELAS XII TKJ</div>
+    </div>
+  </div>
 
   <!-- TOP NAVIGATION BAR -->
   <header class="border-b border-zinc-800/80 bg-zinc-950/70 backdrop-blur sticky top-0 z-30">
@@ -100,19 +122,23 @@ HTML_PAGE = """<!DOCTYPE html>
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
     <!-- BANNER PANDUAN PEMBINAAN POSITIF -->
-    <div class="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div id="bannerPrinsip" class="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div class="flex items-start gap-3">
         <div class="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 mt-0.5">
           <i data-lucide="compass" class="w-4 h-4"></i>
         </div>
         <div>
-          <h2 class="text-xs font-semibold text-zinc-200 tracking-wide uppercase">Prinsip Pendampingan Karakter</h2>
+          <h2 class="text-xs font-semibold text-zinc-200 tracking-wide uppercase">Prinsip Pendampingan Karakter Siswa</h2>
           <p class="text-xs text-zinc-400 mt-0.5 leading-relaxed">
-            Deskripsi wajib mencatat fakta yang teramati secara objektif. Skor <span class="text-emerald-400 font-mono">+1</span> dan <span class="text-rose-400 font-mono">-1</span> merupakan indikator tren bimbingan, bukan vonis mutlak karakter atau penentu tunggal nilai akademik.
+            Pencatatan deskripsi wajib objektif dan faktual. Indikator skor <span class="text-emerald-400 font-mono">+1</span> dan <span class="text-rose-400 font-mono">-1</span> adalah panduan pembimbingan pendidik, bukan penentu tunggal nilai akademik.
           </p>
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition">
+          <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span>Cetak Dokumen</span>
+        </button>
         <a href="/api/export" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition">
           <i data-lucide="download" class="w-3.5 h-3.5"></i>
           <span>Ekspor JSON</span>
@@ -167,9 +193,23 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- PANEL ANALITIK DISTRIBUSI KATEGORI KARAKTER -->
+    <div id="analyticsSection" class="p-5 rounded-xl bg-zinc-900/40 border border-zinc-800/80 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-200">Distribusi Kategori Akhlak & Rasio Pembinaan</h3>
+        </div>
+        <span class="text-[11px] text-zinc-500">Disiplin • Tanggung Jawab • Kepedulian • Kejujuran</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="categoryBars">
+        <div class="text-xs text-zinc-500 py-3 text-center col-span-4">Memuat analitik kategori...</div>
+      </div>
+    </div>
+
     <!-- MAIN CONTENT: TABLE & SEARCH -->
     <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/30 overflow-hidden shadow-sm">
-      <div class="p-4 border-b border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-900/40">
+      <div class="p-4 border-b border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-900/40 no-print">
         <div class="flex items-center gap-2 w-full sm:w-auto">
           <h2 class="text-sm font-semibold text-white">Daftar Siswa & Profil Pembinaan</h2>
           <span id="badgeJumlahSiswa" class="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700/60 font-mono">0 siswa</span>
@@ -196,7 +236,7 @@ HTML_PAGE = """<!DOCTYPE html>
               <th class="py-3 px-4 text-center">Jumlah Catatan</th>
               <th class="py-3 px-4 text-center">Skor Akumulasi</th>
               <th class="py-3 px-4 text-center">Status Pembinaan</th>
-              <th class="py-3 px-4 text-right">Aksi</th>
+              <th class="py-3 px-4 text-right no-print">Aksi</th>
             </tr>
           </thead>
           <tbody id="studentTableBody" class="divide-y divide-zinc-800/50 text-zinc-300">
@@ -205,6 +245,24 @@ HTML_PAGE = """<!DOCTYPE html>
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- TANDA TANGAN CETAK RESMI -->
+    <div id="ttdSection" class="hidden text-black pt-8">
+      <div class="text-center w-56">
+        <p class="text-xs">Mengetahui,</p>
+        <p class="text-xs font-semibold">Kepala Program TKJ</p>
+        <div class="h-16"></div>
+        <p class="text-xs font-bold underline">( ........................................ )</p>
+        <p class="text-[10px] text-gray-500">NIP/NUPTK: -</p>
+      </div>
+      <div class="text-center w-56">
+        <p class="text-xs">Cileungsi, <span id="tglPrint"></span></p>
+        <p class="text-xs font-semibold">Wali Kelas XII TKJ</p>
+        <div class="h-16"></div>
+        <p class="text-xs font-bold underline">( ........................................ )</p>
+        <p class="text-[10px] text-gray-500">NIP/NUPTK: -</p>
       </div>
     </div>
   </main>
@@ -329,9 +387,10 @@ HTML_PAGE = """<!DOCTYPE html>
 
     async function loadData() {
       try {
-        const [resStats, resStudents] = await Promise.all([
+        const [resStats, resStudents, resAnalytics] = await Promise.all([
           fetch('/api/stats').then(r => r.json()),
-          fetch('/api/students').then(r => r.json())
+          fetch('/api/students').then(r => r.json()),
+          fetch('/api/analytics').then(r => r.json())
         ]);
 
         document.getElementById('statTotalSiswa').innerText = resStats.total_siswa;
@@ -343,9 +402,43 @@ HTML_PAGE = """<!DOCTYPE html>
         document.getElementById('badgeJumlahSiswa').innerText = `${semuaSiswa.length} siswa`;
         renderTable(semuaSiswa);
         updateSelectSiswa(semuaSiswa);
+        renderCategoryAnalytics(resAnalytics, resStats.total_catatan);
+
+        // Update tanggal print
+        const d = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('tglPrint').innerText = d.toLocaleDateString('id-ID', options);
       } catch (err) {
         showToast('Gagal memuat data dari server: ' + err, 'error');
       }
+    }
+
+    function renderCategoryAnalytics(categories, totalCatatan) {
+      const container = document.getElementById('categoryBars');
+      if (!categories || categories.length === 0 || totalCatatan === 0) {
+        container.innerHTML = `<div class="text-xs text-zinc-500 py-2 text-center col-span-4">Belum ada catatan untuk kalkulasi analitik.</div>`;
+        return;
+      }
+
+      container.innerHTML = categories.map(c => {
+        const pct = Math.round((c.total / totalCatatan) * 100);
+        return `
+          <div class="p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-zinc-200">${c.kategori}</span>
+              <span class="font-mono text-zinc-400 font-medium">${c.total} catatan (${pct}%)</span>
+            </div>
+            <div class="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden flex">
+              <div class="bg-emerald-500 h-1.5" style="width: ${c.total > 0 ? (c.positif / c.total * 100) : 0}%"></div>
+              <div class="bg-rose-500 h-1.5" style="width: ${c.total > 0 ? (c.evaluasi / c.total * 100) : 0}%"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-zinc-500 pt-0.5">
+              <span class="text-emerald-400 font-mono">+${c.positif} baik</span>
+              <span class="text-rose-400 font-mono">${c.evaluasi} bina</span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function renderTable(data) {
@@ -378,7 +471,7 @@ HTML_PAGE = """<!DOCTYPE html>
             <td class="py-3 px-4 text-center font-mono text-zinc-400">${jml}</td>
             <td class="py-3 px-4 text-center">${skorBadge}</td>
             <td class="py-3 px-4 text-center">${statusBadge}</td>
-            <td class="py-3 px-4 text-right">
+            <td class="py-3 px-4 text-right no-print">
               <button onclick="bukaRiwayat('${id}', '${nama}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium transition">
                 <span>Riwayat</span>
                 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
@@ -586,6 +679,11 @@ class MonitoringRequestHandler(http.server.BaseHTTPRequestHandler):
         if path == "/api/stats":
             stats = statistik_global()
             self._kirim_json(200, stats)
+            return
+
+        if path == "/api/analytics":
+            analytics = ambil_analisis_kategori()
+            self._kirim_json(200, analytics)
             return
 
         if path == "/api/students":

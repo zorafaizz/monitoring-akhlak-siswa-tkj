@@ -2,9 +2,11 @@
 
 Sistem pencatatan, pemantauan, dan pembinaan karakter siswa berbasis Python murni (*Zero External Dependencies*) yang dirancang khusus untuk program keahlian Teknik Komputer dan Jaringan (TKJ) SMK Alhadiid.
 
-Aplikasi ini mengusung arsitektur ganda:
-1. **Terminal Technical Dashboard (TUI)**: Antarmuka konsol modern berbasis ANSI 256 colors dan Unicode box-drawing yang kompatibel langsung di Spyder IDE maupun terminal Linux/macOS/Windows.
-2. **Web Dashboard GUI (Single-Page Application)**: Antarmuka berbasis peramban (*web browser*) dengan desain *Anti-AI Slop* modern (dark mode zinc-950, Vercel/Linear aesthetic, Lucide icons, live search filter, modal form interaktif, dan ekspor JSON) yang digerakkan langsung oleh server HTTP pustaka standar Python.
+Aplikasi ini mengusung arsitektur multi-interface terintegrasi:
+1. **Desktop GUI Native Window (`gui_app.py`)**: Antarmuka aplikasi desktop mandiri berbasis Tkinter/ttk dengan palet warna dark modern Zinc, kartu KPI metrik, layout dual-pane responsif, pencarian langsung (*real-time search*), dan dialog pop-up validatif.
+2. **Web Dashboard GUI SPA (`server_web.py`)**: Antarmuka berbasis peramban (*web browser*) dengan desain *Anti-AI Slop* modern (dark mode zinc-950, Vercel/Linear aesthetic, Lucide icons, analitik distribusi kategori akhlak, live search filter, modal form interaktif, ekspor JSON, dan layout cetak laporan resmi ber-kop surat).
+3. **Terminal Technical Dashboard (`monitoring_akhlak.py`)**: Antarmuka konsol modern berbasis ANSI 256 colors dan Unicode box-drawing yang kompatibel langsung di Spyder IDE maupun terminal Linux/macOS/Windows.
+4. **Unified Interactive Launcher (`main.py`)**: Menu pusat peluncuran aplikasi yang memungkinkan pengguna memilih mode operasional (Aplikasi Desktop, Web Browser, Terminal Console, Seeder, atau Pengujian Otomatis) saat pertama kali dijalankan.
 
 Basis data menggunakan mesin relasional **SQLite3** dengan penegakan integritas ketat (*Foreign Key & CHECK constraints*), indeks optimasi kueri, dan sanitasi *parameterized queries* (`?`) untuk menangkal celah injeksi SQL (*SQL Injection*).
 
@@ -118,45 +120,38 @@ erDiagram
 
 Aplikasi ini menggunakan pustaka standar Python 3, sehingga **tidak membutuhkan `pip install` paket eksternal apapun**.
 
-### 1. Menjalankan di Terminal (CLI Technical Dashboard)
+### 1. Peluncuran Utama Interaktif (Unified Launcher)
+Cara paling mudah untuk memulai adalah menjalankan launcher interaktif:
 ```bash
-# Berpindah ke direktori proyek
-cd /path/ke/monitoring-akhlak-siswa-tkj
-
-# Jalankan CLI interaktif
-python3 monitoring_akhlak.py
+python3 main.py
 ```
+Menu akan meminta Anda memilih mode operasional:
+- Tekan `1` untuk membuka **Aplikasi Desktop GUI (Native Window)**.
+- Tekan `2` untuk membuka **Web Dashboard GUI (Browser)**.
+- Tekan `3` untuk membuka **Terminal Technical Console (TUI)**.
+- Tekan `4` untuk menyuntikkan **Data Seeder Simulasi (10 Siswa XII TKJ)**.
+- Tekan `5` untuk menjalankan **Otomatisasi Pengujian (6 Skenario)**.
 
-### 2. Menjalankan Web Dashboard GUI (Browser)
-Aplikasi menyediakan antarmuka web modern kelas enterprise:
+### 2. Menjalankan Langsung Mode Spesifik (CLI Flags)
 ```bash
-# Jalankan web server (default port 8080)
+# Mode Desktop GUI Native Window
+python3 main.py --gui
+# atau
+python3 gui_app.py
+
+# Mode Web Dashboard Browser (Port 8080)
+python3 main.py --web
+# atau
 python3 server_web.py
 
-# Atau jalankan via flag CLI:
-python3 monitoring_akhlak.py --web
-```
-Buka peramban (*browser*) Anda di: `http://localhost:8080`
+# Mode Terminal Console (Spyder / Terminal)
+python3 main.py --cli
+# atau
+python3 monitoring_akhlak.py
 
-**Fitur Web Dashboard:**
-- Tampilan Dark Mode (Vercel/Linear Aesthetic).
-- Metrik Real-time (Total Siswa, Total Catatan, Apresiasi Positif, Evaluasi Pembinaan).
-- Pencarian dan filter instan pada daftar siswa.
-- Drawer / Modal Riwayat Siswa terurut kronologis dengan status pembinaan.
-- Formulir pendaftaran siswa baru & pencatatan perilaku dengan validasi instan.
-- Tombol *One-Click Data Seeder* (10 siswa simulatif Kelas XII TKJ).
-- Ekspor seluruh data pembinaan ke format JSON resmi.
-
-### 3. Menjalankan di Spyder IDE
-1. Buka aplikasi **Spyder**.
-2. Pilih menu `File` -> `Open...`, lalu pilih `monitoring_akhlak.py`.
-3. Tekan **F5** (Run File). Menu CLI interaktif akan langsung berjalan di panel **IPython Console**.
-
-### 4. Menjalankan Otomatisasi Pengujian 6 Skenario Wajib
-```bash
+# Jalankan Otomatisasi Pengujian
 python3 uji_skenario.py
 ```
-Skrip uji akan memvalidasi seluruh fungsi, kendala integritas basis data (*Primary Key*, *Foreign Key*, *CHECK constraint*), dan membersihkan database simulasi secara otomatis.
 
 ---
 
@@ -167,6 +162,8 @@ monitoring-akhlak-siswa-tkj/
 ├── .gitignore               # Proteksi database (*.db), cache, dan file sensitif
 ├── DOKUMENTASI_PROYEK.md    # Laporan 5 fase proyek, etika data, & 5 jawaban refleksi
 ├── README.md                # Dokumentasi arsitektur, panduan teknis, dan diagram
+├── gui_app.py               # Aplikasi Desktop GUI Native (Tkinter/ttk Dark Modern)
+├── main.py                  # Unified interactive launcher & command router
 ├── monitoring_akhlak.py     # Modul inti SQLite, analitik global, seeder, & CLI dashboard
 ├── server_web.py            # Web Dashboard GUI SPA & REST API server (Zero Dependency)
 └── uji_skenario.py          # Otomatisasi pengujian 6 skenario wajib & verifikasi
