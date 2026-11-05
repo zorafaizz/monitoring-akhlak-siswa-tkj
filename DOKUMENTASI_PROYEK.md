@@ -176,10 +176,12 @@ Kebersihan Lingkungan: Database simulasi berhasil dibersihkan.
 
 ### 05 Evaluasi
 
-#### 1. Keunggulan Arsitektur
-- **Portabilitas Sempurna Tanpa Setup Rumit**: Berjalan di sistem operasi apa pun hanya dengan Python 3 murni tanpa ketergantungan paket luar.
+#### 1. Keunggulan Arsitektur & Desain Mutakhir
+- **Portabilitas Sempurna Tanpa Setup Rumit**: Berjalan di sistem operasi apa pun hanya dengan Python 3 murni tanpa ketergantungan paket luar (`pip`).
+- **Antarmuka Standar Enterprise (Anti-AI Slop)**: Web Dashboard mengadopsi standar desain Linear/Raycast/Vercel (palet dark zinc-950, zero emojis, Lucide icons strokeWidth 1.5, Command Palette `Ctrl+K`, drawer slide-over, dan layout cetak resmi).
+- **All-in-One Auto-Launch**: Cukup menjalankan satu perintah `python3 monitoring_akhlak.py`, basis data SQLite diinisialisasi, server web otomatis aktif di latar belakang, dan peramban web langsung terbuka.
 - **Integritas Basis Data Kuat & Terindeks**: Penegakan `PRAGMA foreign_keys = ON`, `CHECK constraint`, dan indeks SQLite menjamin konsistensi data dan kecepatan kueri.
-- **Fleksibilitas Antarmuka**: Pengguna dapat memilih antarmuka terminal technical minimalist maupun antarmuka web GUI responsif berstandar modern.
+- **Dukungan Multi-Format Data**: Menyediakan ekspor data instan ke format JSON maupun file CSV resmi.
 
 #### 2. Keterbatasan & Peluang Pengembangan
 - **Lingkungan Single-User**: Pada model lokal, aplikasi dirancang untuk penggunaan satu operator pada satu workstation.

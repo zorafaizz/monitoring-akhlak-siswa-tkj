@@ -8,6 +8,8 @@ Zero external dependencies.
 import os
 import sqlite3
 import sys
+import threading
+import webbrowser
 from datetime import date
 
 NAMA_DB_DEFAULT = "monitoring_akhlak.db"
@@ -273,6 +275,32 @@ def ambil_analisis_kategori(nama_db=NAMA_DB_DEFAULT):
         ]
 
 
+def ambil_semua_catatan(nama_db=NAMA_DB_DEFAULT):
+    """
+    Mengambil seluruh catatan pembinaan siswa lengkap dengan nama siswa,
+    terurut dari tanggal dan ID terbaru.
+    """
+    with koneksi_db(nama_db) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT 
+                c.id_catatan,
+                c.id_siswa,
+                s.nama,
+                c.tanggal,
+                c.kategori,
+                c.deskripsi,
+                c.skor,
+                c.tindak_lanjut
+            FROM catatan c
+            INNER JOIN siswa s ON c.id_siswa = s.id_siswa
+            ORDER BY c.tanggal DESC, c.id_catatan DESC
+            """
+        )
+        return cursor.fetchall()
+
+
 def isi_data_seeder(nama_db=NAMA_DB_DEFAULT):
     """
     Menyuntikkan data simulasi fiktif 10 siswa Kelas XII TKJ beserta rekam jejak
@@ -341,10 +369,25 @@ def isi_data_seeder(nama_db=NAMA_DB_DEFAULT):
 # TAMPILAN ANTARMUKA KONSOL (CLI MODERN TECHNICAL)
 # =============================================================================
 
+def _mulai_web_background(port=8080):
+    """Menjalankan Web GUI server di background daemon thread."""
+    try:
+        import socketserver
+        from server_web import MonitoringRequestHandler
+        socketserver.TCPServer.allow_reuse_address = True
+        httpd = socketserver.TCPServer(("", port), MonitoringRequestHandler)
+        t = threading.Thread(target=httpd.serve_forever, daemon=True)
+        t.start()
+        return httpd
+    except Exception:
+        return None
+
+
 def cetak_kotak_header():
     """Mencetak header aplikasi dengan aksen technical modern."""
     print(f"\n{C_CYAN}┌────────────────────────────────────────────────────────────────────────┐{C_RESET}")
     print(f"{C_CYAN}│{C_RESET} {C_BOLD}◈ SISTEM MONITORING AKHLAK SISWA | KELAS XII TKJ - SMK ALHADIID{C_RESET}        {C_CYAN}│{C_RESET}")
+    print(f"{C_CYAN}│{C_RESET}   {C_GREEN}Web Dashboard GUI Otomatis Aktif di: http://127.0.0.1:8080{C_RESET}          {C_CYAN}│{C_RESET}")
     print(f"{C_CYAN}│{C_RESET}   {C_DIM}Arsitektur SQLite Relasional • Parameterized • Zero External Deps{C_RESET}     {C_CYAN}│{C_RESET}")
     print(f"{C_CYAN}└────────────────────────────────────────────────────────────────────────┘{C_RESET}")
 
@@ -418,7 +461,7 @@ def jalankan_server_web_lokal(port=8080):
 
 def main():
     """
-    Fungsi utama penggerak CLI dengan penanganan error terpusat dan ramah.
+    Fungsi utama penggerak dengan penanganan error terpusat dan auto-launch web interface.
     """
     siapkan_db()
 
@@ -437,6 +480,14 @@ def main():
             ts, tc = isi_data_seeder()
             print(f"Data seeder disuntikkan: +{ts} Siswa, +{tc} Catatan.")
             return
+
+    # Secara default jalankan Web Dashboard di background dan buka browser
+    httpd = _mulai_web_background(8080)
+    if httpd:
+        try:
+            webbrowser.open("http://127.0.0.1:8080")
+        except Exception:
+            pass
 
     while True:
         tampilkan_menu()

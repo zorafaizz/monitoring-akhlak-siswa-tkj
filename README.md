@@ -120,8 +120,18 @@ erDiagram
 
 Aplikasi ini menggunakan pustaka standar Python 3, sehingga **tidak membutuhkan `pip install` paket eksternal apapun**.
 
-### 1. Peluncuran Utama Interaktif (Unified Launcher)
-Cara paling mudah untuk memulai adalah menjalankan launcher interaktif:
+### 1. Eksekusi Cepat Langsung (All-in-One Auto-Launch)
+Cukup jalankan satu perintah:
+```bash
+python3 monitoring_akhlak.py
+```
+**Apa yang terjadi secara otomatis:**
+1. Basis data SQLite diinisialisasi dan Foreign Key ditegakkan.
+2. Web Dashboard GUI Enterprise otomatis aktif di background pada port `8080`.
+3. Peramban web (*browser*) otomatis terbuka menampilkan antarmuka modern.
+4. Terminal konsol tetap aktif melayani menu interaktif TUI.
+
+### 2. Peluncuran Utama Interaktif (Unified Launcher)
 ```bash
 python3 main.py
 ```
@@ -132,7 +142,7 @@ Menu akan meminta Anda memilih mode operasional:
 - Tekan `4` untuk menyuntikkan **Data Seeder Simulasi (10 Siswa XII TKJ)**.
 - Tekan `5` untuk menjalankan **Otomatisasi Pengujian (6 Skenario)**.
 
-### 2. Menjalankan Langsung Mode Spesifik (CLI Flags)
+### 3. Menjalankan Langsung Mode Spesifik (CLI Flags)
 ```bash
 # Mode Desktop GUI Native Window
 python3 main.py --gui
@@ -146,8 +156,6 @@ python3 server_web.py
 
 # Mode Terminal Console (Spyder / Terminal)
 python3 main.py --cli
-# atau
-python3 monitoring_akhlak.py
 
 # Jalankan Otomatisasi Pengujian
 python3 uji_skenario.py
