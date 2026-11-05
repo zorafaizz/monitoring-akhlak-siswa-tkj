@@ -8,7 +8,7 @@
 1. [BAB I: METODOLOGI 5 TAHAPAN PROYEK](#bab-i-metodologi-5-tahapan-proyek)
    - [01 Analisis](#01-analisis)
    - [02 Rancang](#02-rancang)
-   - [03 Bangun](#03-bangun)
+   - [03 Bangun (CLI & Web GUI SPA)](#03-bangun)
    - [04 Verifikasi & Hasil Pengujian](#04-verifikasi--hasil-pengujian)
    - [05 Evaluasi](#05-evaluasi)
 2. [BAB II: ETIKA DAN PRIVASI DATA SISWA](#bab-ii-etika-dan-privasi-data-siswa)
@@ -24,14 +24,14 @@
 Di lingkungan pendidikan kejuruan (SMK), khususnya program keahlian Teknik Komputer dan Jaringan (TKJ), pembentukan karakter profesional, kedisiplinan laboratorium, etika penggunaan teknologi, dan tanggung jawab kerja sama kelompok sama krusialnya dengan kemampuan teknis (*hard skills*). Selama ini, pencatatan pelanggaran maupun capaian positif siswa seringkali menghadapi beberapa kelemahan fundamental:
 - **Pencatatan Manual Konvensional**: Menggunakan buku catatan fisik yang rentan hilang, rusak, atau tercecer antar wali kelas dan guru BK.
 - **Bias Subjektif & Penghakiman**: Catatan seringkali hanya berfokus pada pelanggaran (aspek negatif) tanpa mengapresiasi perilaku positif, serta minim ruang dialog dan klarifikasi.
-- **Kompleksitas Perangkat Lunak Berlebih**: Sistem informasi berbasis web atau cloud terkadang membutuhkan konfigurasi server, koneksi internet stabil, dan dependensi pustaka yang rumit, menyulitkan implementasi cepat di laboratorium sekolah yang berbasis lingkungan offline/lokal.
+- **Kompleksitas Perangkat Lunak Berlebih**: Sistem informasi berbasis web komersial umumnya membutuhkan instalasi web server eksternal berat (Apache/Nginx), basis data enterprise (MySQL/PostgreSQL), koneksi internet aktif, dan ratusan megabyte dependensi `npm`/`pip`, menyulitkan implementasi cepat di laboratorium sekolah yang berbasis lingkungan offline/lokal.
 
 #### 2. Kebutuhan Sistem
 Berdasarkan analisis tersebut, dirumuskan kebutuhan sistem perangkat lunak yang:
-- **Mandiri & Ringan (*Self-contained*)**: Dapat dijalankan seketika di lingkungan Python standar (seperti Spyder IDE pada distribusi Anaconda atau terminal bawaan OS) tanpa instalasi dependensi pihak ketiga (`pip`).
-- **Penyimpanan Terstruktur & Terintegrasi**: Menggunakan basis data relasional lokal yang handal (SQLite3) dengan integritas referensial antar entitas.
+- **Mandiri & Ringan (*Zero External Dependencies*)**: Dapat dijalankan seketika di lingkungan Python standar (Spyder IDE maupun terminal bawaan OS) tanpa instalasi dependensi pihak ketiga (`pip`).
+- **Penyimpanan Terstruktur & Terindeks**: Menggunakan basis data relasional lokal SQLite3 dengan integritas referensial antar entitas, penegakan foreign key, dan indeks kueri.
 - **Validasi Ketat & Aman**: Memvalidasi setiap input pengguna secara defensif serta kebal terhadap celah injeksi SQL (*SQL Injection*).
-- **Berorientasi Pembinaan Positif**: Mengakomodasi pencatatan apresiasi (+1) maupun pembinaan (-1) yang dilengkapi deskripsi faktual serta rencana tindak lanjut nyata.
+- **Pengalaman Pengguna Modern (*Modern UI/UX*)**: Menyediakan antarmuka ganda: Terminal Technical Dashboard (TUI) dan Web Dashboard GUI (SPA) berbasis peramban modern (*Anti-AI Slop*, palet dark zinc-950, live search, drawer riwayat, dan ekspor JSON).
 
 ---
 
@@ -39,7 +39,7 @@ Berdasarkan analisis tersebut, dirumuskan kebutuhan sistem perangkat lunak yang:
 
 Tahap perancangan menitikberatkan pada kesederhanaan arsitektur (*KISS principle*) dan ketangguhan struktur data (*robustness*).
 
-#### 1. Perancangan Skema Basis Data Relasional
+#### 1. Perancangan Skema Basis Data Relasional & Indeks
 Sistem memodelkan hubungan *One-to-Many* (Satu siswa dapat memiliki banyak catatan pembinaan perilaku).
 
 1. **Tabel `siswa`**
@@ -56,27 +56,34 @@ Sistem memodelkan hubungan *One-to-Many* (Satu siswa dapat memiliki banyak catat
    - `tindak_lanjut` (`TEXT NOT NULL`): Rencana pendampingan atau langkah solutif yang disepakati.
    - *Relational Rule*: `FOREIGN KEY (id_siswa) REFERENCES siswa(id_siswa)` dengan penegakan wajib `PRAGMA foreign_keys = ON;`.
 
-#### 2. Perancangan Arsitektur Antarmuka (CLI)
-Antarmuka konsol dirancang terstruktur dan ramah pengguna dengan 4 menu utama:
-- `[1]` Tambah Siswa Baru.
-- `[2]` Tambah Catatan Pembinaan Perilaku.
-- `[3]` Lihat Riwayat & Ringkasan Siswa (menampilkan total catatan dan agregat skor ringkas, dilanjutkan daftar riwayat kronologis terbalik).
-- `[4]` Keluar dari Aplikasi.
+3. **Optimasi Indeks Kueri**
+   - `CREATE INDEX IF NOT EXISTS idx_catatan_id_siswa ON catatan(id_siswa);`
+   - `CREATE INDEX IF NOT EXISTS idx_catatan_tanggal ON catatan(tanggal);`
+
+#### 2. Perancangan Arsitektur Antarmuka Ganda
+1. **Terminal Technical Dashboard (TUI)**:
+   - Navigasi 7 menu interaktif dengan pewarnaan ANSI 256 dan pembingkaian box-drawing Unicode.
+   - Fitur ikhtisar analitik global dan seeder simulasi 10 siswa TKJ.
+2. **Web Dashboard GUI (Single-Page Application)**:
+   - Digerakkan oleh server HTTP bawaan Python (`http.server` & `socketserver`).
+   - Frontend modern bergaya Linear/Vercel: Dark mode zinc-950, Lucide icons, live search siswa, drawer riwayat terurut, modal form validasi instan, dan ekspor data JSON resmi.
 
 ---
 
 ### 03 Bangun
 
-Aplikasi dikonstruksi ke dalam modul Python murni `monitoring_akhlak.py`.
+Aplikasi dikonstruksi ke dalam modul Python murni:
+1. `monitoring_akhlak.py`: Modul database SQLite, logika bisnis, analitik global, seeder data simulasi, dan CLI Technical Dashboard.
+2. `server_web.py`: Server Web GUI SPA dan RESTful API handler berbasis pustaka standar.
 
 #### 1. Implementasi Keamanan & Integritas Data
-- **Parameterized Queries**: Seluruh pernyataan SQL (`INSERT`, `SELECT`) menggunakan placeholder tanda tanya (`?`) dan *tuple* parameter. Pendekatan ini memisahkan secara mutlak antara instruksi SQL dan data masukan, sehingga mengeliminasi risiko *SQL Injection*.
+- **Parameterized Queries**: Seluruh pernyataan SQL (`INSERT`, `SELECT`) menggunakan placeholder tanda tanya (`?`) dan *tuple* parameter untuk mengeliminasi risiko *SQL Injection*.
 - **Database Context Manager**: Menggunakan `with koneksi_db() as conn:` untuk menjamin transaksi berjalan secara atomik (*commit* otomatis saat sukses, dan *rollback* aman jika terjadi galat).
 - **Defensive Input Validation**:
-  - Pengecekan tipe dan pembersihan karakter spasi tak terlihat menggunakan `.strip()`.
-  - Pengecekan string kosong pada seluruh parameter wajib (`id_siswa`, `nama`, `kategori`, `deskripsi`, `tindak_lanjut`).
+  - Pengecekan tipe dan pembersihan spasi menggunakan `.strip()`.
+  - Pengecekan string kosong pada seluruh parameter wajib.
   - Validasi tipe ketat untuk `skor` dengan memastikan `type(skor) is int and skor in (-1, 1)`.
-- **Penanganan Kesalahan Terpusat**: Loop utama dibungkus dalam blok penanganan `try...except (ValueError, sqlite3.IntegrityError) as err:` yang mencegah aplikasi *crash* dan mencetak umpan balik ramah kepada pengguna: `"Data belum tersimpan: <pesan error>"`.
+- **Penanganan Kesalahan Terpusat**: Loop utama dibungkus dalam blok penanganan `try...except (ValueError, sqlite3.IntegrityError) as err:` dengan pesan ramah: `"Data belum tersimpan: <pesan error>"`.
 
 ---
 
@@ -162,14 +169,14 @@ Kebersihan Lingkungan: Database simulasi berhasil dibersihkan.
 ### 05 Evaluasi
 
 #### 1. Keunggulan Arsitektur
-- **Portabilitas Sempurna**: Berjalan di lingkungan Python manapun tanpa proses instalasi library tambahan.
-- **Integritas Basis Data Kuat**: Penegakan `PRAGMA foreign_keys = ON` dan `CHECK constraint` SQLite menjamin data selalu konsisten.
-- **Keamanan Aplikasi Teruji**: Parameterized queries menutup celah injeksi kode.
+- **Portabilitas Sempurna Tanpa Setup Rumit**: Berjalan di sistem operasi apa pun hanya dengan Python 3 murni tanpa ketergantungan paket luar.
+- **Integritas Basis Data Kuat & Terindeks**: Penegakan `PRAGMA foreign_keys = ON`, `CHECK constraint`, dan indeks SQLite menjamin konsistensi data dan kecepatan kueri.
+- **Fleksibilitas Antarmuka**: Pengguna dapat memilih antarmuka terminal technical minimalist maupun antarmuka web GUI responsif berstandar modern.
 
 #### 2. Keterbatasan & Peluang Pengembangan
-- **Lingkungan Single-User**: Pada model CLI lokal, aplikasi dirancang untuk penggunaan satu operator pada satu workstation.
+- **Lingkungan Single-User**: Pada model lokal, aplikasi dirancang untuk penggunaan satu operator pada satu workstation.
 - **Ketiadaan Autentikasi Pengguna**: Belum ada pemisahan kredensial login antara peran Guru BK, Wali Kelas, dan Siswa.
-- **Rekomendasi Skalabilitas**: Untuk penerapan tingkat sekolah menyeluruh, arsitektur dapat ditingkatkan menjadi arsitektur Client-Server (REST API berbasis FastAPI/Flask dengan frontend web responsif serta autentikasi berbasis token JWT).
+- **Rekomendasi Skalabilitas**: Untuk penerapan tingkat sekolah menyeluruh, arsitektur dapat ditingkatkan menjadi sistem multi-user dengan autentikasi berbasis token JWT dan enkripsi database tingkat lanjut (SQLCipher).
 
 ---
 
@@ -178,7 +185,7 @@ Kebersihan Lingkungan: Database simulasi berhasil dibersihkan.
 Pencatatan perilaku dan karakter siswa menyangkut privasi dan masa depan peserta didik. Oleh karena itu, sistem ini menetapkan protokol etika data yang ketat:
 
 1. **Penggunaan Data Fiktif (*Synthetic Data Principle*)**:
-   Seluruh data dalam pengembangan, pengujian unit, demonstrasi kelas, maupun pengujian otomatis diwajibkan 100% menggunakan identitas fiktif (misal: `XII-TKJ-01` dengan nama `Siswa Simulasi Satu`). Dilarang keras menggunakan nama atau NIS nyata siswa sekolah.
+   Seluruh data dalam pengembangan, pengujian unit, demonstrasi kelas, maupun pengujian otomatis diwajibkan 100% menggunakan identitas fiktif (misal: `XII-TKJ-01` dengan nama `Ahmad Fauzi`). Dilarang keras menggunakan nama atau NIS nyata siswa sekolah.
 2. **Larangan Unggah Data Nyata ke Repositori Publik**:
    Repositori publik di platform seperti GitHub HANYA boleh berisi kode program, skema pengujian, dan dokumentasi. File basis data lokal (`*.db`, `*.sqlite3`) serta file kredensial/lingkungan (`.env`) wajib diblokir secara permanen melalui file konfigurasi `.gitignore`.
 3. **Prinsip Pembatasan Hak Akses (*Principle of Least Privilege*)**:
@@ -253,7 +260,7 @@ Sebelum aplikasi ini diimplementasikan pada skala produksi di luar laboratorium 
 2. **Jejak Audit Mutlak (*Audit Trail / Immutable History*)**:
    Menambahkan tabel log sistem yang mencatat identitas pencatat, waktu pencatatan (*timestamp*), serta riwayat pengubahan (*edit history*) untuk mencegah manipulasi catatan secara sepihak.
 3. **Transformasi Menjadi Arsitektur Klien-Server / Web Terpusat**:
-   Mengemas fungsi logika menjadi RESTful API terpusat (misal menggunakan FastAPI) sehingga database tidak tersebar di banyak PC laboratorium, melainkan tersimpan di server sekolah yang terkelola secara aman dan terpadu.
+   Mengemas fungsi logika menjadi RESTful API terpusat sehingga database tidak tersebar di banyak PC laboratorium, melainkan tersimpan di server sekolah yang terkelola secara aman dan terpadu.
 4. **Fitur Ekspor & Notifikasi Terpadu**:
    Menyediakan fungsi ekspor laporan bimbingan ke format dokumen resmi (.pdf/.xlsx) serta sistem pemberitahuan berkala kepada orang tua/wali murid sebagai wujud transparansi dan kolaborasi pendidikan antara sekolah dan keluarga.
 
